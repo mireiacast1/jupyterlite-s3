@@ -2,36 +2,44 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Loading Notebook...</title>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Loading Notebook - JupyterLite</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
-        body {
+        * {
             margin: 0;
             padding: 0;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            box-sizing: border-box;
         }
         
-        .loader {
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .container {
             background: white;
-            padding: 40px;
-            border-radius: 16px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 50px;
+            max-width: 600px;
+            width: 100%;
             text-align: center;
-            max-width: 500px;
         }
         
         .spinner {
-            width: 50px;
-            height: 50px;
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #667eea;
+            width: 60px;
+            height: 60px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #667eea;
             border-radius: 50%;
             animation: spin 1s linear infinite;
-            margin: 0 auto 20px;
+            margin: 0 auto 30px;
         }
         
         @keyframes spin {
@@ -39,149 +47,269 @@
             100% { transform: rotate(360deg); }
         }
         
-        h2 {
-            margin: 0 0 10px 0;
+        h1 {
+            font-size: 28px;
             color: #333;
+            margin-bottom: 15px;
         }
         
-        p {
+        .status {
+            font-size: 16px;
             color: #666;
-            margin: 10px 0;
+            margin-bottom: 10px;
+        }
+        
+        .notebook-name {
+            font-size: 14px;
+            color: #999;
+            font-family: 'Courier New', monospace;
+            background: #f5f5f5;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 20px 0;
+            word-break: break-all;
         }
         
         .error {
-            background: #f8d7da;
-            color: #721c24;
-            padding: 15px;
-            border-radius: 8px;
+            background: #fee;
+            border: 1px solid #fcc;
+            color: #c00;
+            padding: 20px;
+            border-radius: 10px;
             margin-top: 20px;
-            display: none;
         }
         
-        iframe {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+        .success {
+            background: #efe;
+            border: 1px solid #cfc;
+            color: #060;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+        
+        button {
+            background: #667eea;
+            color: white;
             border: none;
-            z-index: 9999;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: all 0.3s;
         }
         
-        iframe.loaded {
-            display: block;
+        button:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .progress {
+            width: 100%;
+            height: 4px;
+            background: #f0f0f0;
+            border-radius: 2px;
+            overflow: hidden;
+            margin: 20px 0;
+        }
+        
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            width: 0%;
+            transition: width 0.3s;
         }
     </style>
 </head>
 <body>
-    <div class="loader" id="loader">
-        <div class="spinner"></div>
-        <h2>📓 Loading Notebook</h2>
-        <p id="status">Initializing...</p>
-        <div class="error" id="error"></div>
+    <div class="container">
+        <div class="spinner" id="spinner"></div>
+        <h1 id="title">📓 Loading Notebook</h1>
+        <div class="status" id="status">Initializing...</div>
+        <div class="notebook-name" id="notebookName" style="display: none;"></div>
+        <div class="progress">
+            <div class="progress-bar" id="progressBar"></div>
+        </div>
+        <div id="message"></div>
     </div>
-    
-    <iframe id="jupyterlab"></iframe>
-    
+
     <script>
         (async function() {
+            const $ = id => document.getElementById(id);
+            const setProgress = pct => $('progressBar').style.width = pct + '%';
+            const setStatus = txt => $('status').textContent = txt;
+            
             const params = new URLSearchParams(window.location.search);
-            const notebookUrl = params.get('fromURL');
-            const status = document.getElementById('status');
-            const errorDiv = document.getElementById('error');
-            const iframe = document.getElementById('jupyterlab');
-            const loader = document.getElementById('loader');
+            const fromURL = params.get('fromURL');
             
-            console.log('🚀 Notebook Loader started');
-            console.log('📍 URL params:', Object.fromEntries(params));
+            console.log('🚀 Notebook Loader');
+            console.log('📍 fromURL:', fromURL);
             
-            if (!notebookUrl) {
-                showError('Missing fromURL parameter. Add ?fromURL=ENCODED_URL to the URL.');
+            if (!fromURL) {
+                showError('Missing fromURL parameter in URL');
                 return;
             }
             
             try {
-                // 1. Descargar notebook
-                status.textContent = 'Downloading notebook from S3...';
-                console.log('📥 Fetching:', notebookUrl);
+                // Paso 1: Descargar notebook
+                setStatus('Downloading notebook from S3...');
+                setProgress(25);
                 
-                const response = await fetch(notebookUrl);
-                
+                const response = await fetch(fromURL);
                 if (!response.ok) {
-                    throw new Error(`Failed to download notebook: HTTP ${response.status} ${response.statusText}`);
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                 }
                 
                 const notebook = await response.json();
                 console.log('✅ Notebook downloaded:', notebook);
                 
-                // Validar que es un notebook válido
-                if (!notebook.cells || !notebook.metadata) {
-                    throw new Error('Invalid notebook format (missing cells or metadata)');
+                if (!notebook.cells) {
+                    throw new Error('Invalid notebook format (no cells found)');
                 }
                 
-                // 2. Extraer nombre del notebook
-                const urlObj = new URL(notebookUrl);
-                const s3uri = urlObj.searchParams.get('s3uri') || urlObj.pathname;
+                setProgress(50);
+                
+                // Paso 2: Extraer nombre
+                const urlObj = new URL(fromURL);
+                const s3uri = urlObj.searchParams.get('s3uri') || '';
                 const notebookName = s3uri.split('/').pop() || 'notebook.ipynb';
+                
+                $('notebookName').textContent = notebookName;
+                $('notebookName').style.display = 'block';
                 
                 console.log('📓 Notebook name:', notebookName);
                 
-                // 3. Guardar temporalmente
-                status.textContent = `Preparing ${notebookName}...`;
+                setStatus('Preparing JupyterLab...');
+                setProgress(75);
                 
-                const notebookData = {
-                    name: notebookName,
-                    content: notebook,
-                    timestamp: Date.now()
-                };
+                // Paso 3: Guardar en IndexedDB
+                await saveNotebook(notebookName, notebook);
                 
-                localStorage.setItem('jupyterlite_pending_notebook', JSON.stringify(notebookData));
-                console.log('💾 Notebook saved to localStorage');
+                setProgress(100);
                 
-                // 4. Cargar JupyterLab con ruta absoluta
-                status.textContent = 'Loading JupyterLab...';
-                console.log('🔄 Loading JupyterLab iframe');
+                // Paso 4: Redireccionar a JupyterLab
+                $('spinner').style.display = 'none';
+                showSuccess(notebookName);
                 
-                // Construir ruta base correcta
-                const pathParts = window.location.pathname.split('/');
-                pathParts.pop(); // Quitar 'open-notebook.html'
-                const basePath = pathParts.join('/');
-                
-                // URL absoluta de JupyterLab
-                const labUrl = `${basePath}/lab/index.html`;
-                console.log('📍 Lab URL:', labUrl);
-                
-                iframe.src = labUrl;
-                
-                // 5. Timeout - simplemente mostrar JupyterLab después de 8 segundos
+                // Auto-redirect después de 2 segundos
                 setTimeout(() => {
-                    console.log('⏱️ Showing JupyterLab');
-                    loader.style.display = 'none';
-                    iframe.classList.add('loaded');
-                    
-                    // Mostrar instrucción al usuario
-                    console.log('ℹ️ To open notebook: File → Open → ' + notebookName);
-                    console.log('ℹ️ Or check localStorage: jupyterlite_pending_notebook');
-                }, 8000);
+                    redirectToLab(notebookName);
+                }, 2000);
                 
             } catch (error) {
                 console.error('❌ Error:', error);
                 showError(error.message);
             }
             
-            function showError(message) {
-                status.textContent = 'Error';
-                errorDiv.innerHTML = `
-                    ⚠️ ${message}<br><br>
-                    <button onclick="window.location.href='${window.location.pathname.split('/').slice(0, -1).join('/')}/lab/index.html'" 
-                            style="padding: 10px 20px; background: #667eea; color: white; border: none; border-radius: 6px; cursor: pointer;">
-                        Open JupyterLab anyway
-                    </button>
+            async function saveNotebook(name, content) {
+                return new Promise((resolve, reject) => {
+                    const dbName = 'JupyterLite Storage';
+                    const request = indexedDB.open(dbName);
+                    
+                    request.onsuccess = (event) => {
+                        const db = event.target.result;
+                        const storeName = 'files';
+                        
+                        if (!db.objectStoreNames.contains(storeName)) {
+                            console.warn('⚠️ IndexedDB store not found, using localStorage fallback');
+                            localStorage.setItem('jupyterlite_notebook_' + name, JSON.stringify(content));
+                            resolve();
+                            return;
+                        }
+                        
+                        try {
+                            const tx = db.transaction([storeName], 'readwrite');
+                            const store = tx.objectStore(storeName);
+                            
+                            const fileData = {
+                                name: name,
+                                path: name,
+                                type: 'notebook',
+                                format: 'json',
+                                content: content,
+                                created: new Date().toISOString(),
+                                last_modified: new Date().toISOString(),
+                                mimetype: 'application/x-ipynb+json',
+                                writable: true
+                            };
+                            
+                            const putRequest = store.put(fileData, name);
+                            
+                            putRequest.onsuccess = () => {
+                                console.log('✅ Saved to IndexedDB');
+                                resolve();
+                            };
+                            
+                            putRequest.onerror = (err) => {
+                                console.warn('⚠️ IndexedDB save failed:', err);
+                                localStorage.setItem('jupyterlite_notebook_' + name, JSON.stringify(content));
+                                resolve();
+                            };
+                            
+                        } catch (err) {
+                            console.warn('⚠️ Transaction error:', err);
+                            localStorage.setItem('jupyterlite_notebook_' + name, JSON.stringify(content));
+                            resolve();
+                        }
+                    };
+                    
+                    request.onerror = () => {
+                        console.warn('⚠️ IndexedDB open failed, using localStorage');
+                        localStorage.setItem('jupyterlite_notebook_' + name, JSON.stringify(content));
+                        resolve();
+                    };
+                });
+            }
+            
+            function redirectToLab(notebookName) {
+                const pathParts = window.location.pathname.split('/');
+                pathParts.pop();
+                const basePath = pathParts.join('/');
+                const labURL = `${basePath}/lab/index.html`;
+                
+                console.log('🚀 Redirecting to:', labURL);
+                window.location.href = labURL;
+            }
+            
+            function showSuccess(notebookName) {
+                setStatus('✅ Ready!');
+                $('message').innerHTML = `
+                    <div class="success">
+                        <strong>✅ Notebook loaded successfully!</strong>
+                        <p style="margin-top: 10px;">
+                            Opening JupyterLab...<br>
+                            Look for: <code>${notebookName}</code>
+                        </p>
+                    </div>
                 `;
-                errorDiv.style.display = 'block';
+            }
+            
+            function showError(message) {
+                $('spinner').style.display = 'none';
+                $('title').textContent = '❌ Error';
+                setStatus('');
+                
+                const pathParts = window.location.pathname.split('/');
+                pathParts.pop();
+                const basePath = pathParts.join('/');
+                const labURL = `${basePath}/lab/index.html`;
+                
+                $('message').innerHTML = `
+                    <div class="error">
+                        <strong>Error:</strong><br>
+                        ${message}
+                        <br><br>
+                        <button onclick="window.location.href='${labURL}'">
+                            Open JupyterLab anyway
+                        </button>
+                    </div>
+                `;
             }
         })();
     </script>
 </body>
 </html>
+
