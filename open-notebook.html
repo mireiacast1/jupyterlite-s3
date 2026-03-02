@@ -139,50 +139,31 @@
                 localStorage.setItem('jupyterlite_pending_notebook', JSON.stringify(notebookData));
                 console.log('💾 Notebook saved to localStorage');
                 
-                // 4. Cargar JupyterLab
+                // 4. Cargar JupyterLab con ruta absoluta
                 status.textContent = 'Loading JupyterLab...';
                 console.log('🔄 Loading JupyterLab iframe');
                 
-                iframe.src = './lab/index.html?autoload=true';
+                // Construir ruta base correcta
+                const pathParts = window.location.pathname.split('/');
+                pathParts.pop(); // Quitar 'open-notebook.html'
+                const basePath = pathParts.join('/');
                 
-                // 5. Escuchar mensaje de JupyterLab cuando esté listo
-                let notebookOpened = false;
+                // URL absoluta de JupyterLab
+                const labUrl = `${basePath}/lab/index.html`;
+                console.log('📍 Lab URL:', labUrl);
                 
-                window.addEventListener('message', async (event) => {
-                    if (event.data.type === 'jupyterlab_ready' && !notebookOpened) {
-                        notebookOpened = true;
-                        console.log('✅ JupyterLab ready, opening notebook');
-                        
-                        try {
-                            // Enviar comando para abrir notebook
-                            iframe.contentWindow.postMessage({
-                                type: 'open_notebook',
-                                notebook: notebookData
-                            }, '*');
-                            
-                            // Esperar confirmación
-                            setTimeout(() => {
-                                console.log('✅ Notebook should be open');
-                                loader.style.display = 'none';
-                                iframe.classList.add('loaded');
-                                localStorage.removeItem('jupyterlite_pending_notebook');
-                            }, 2000);
-                            
-                        } catch (err) {
-                            console.error('❌ Error opening notebook:', err);
-                            showError('Could not open notebook: ' + err.message);
-                        }
-                    }
-                });
+                iframe.src = labUrl;
                 
-                // Timeout si JupyterLab no responde
+                // 5. Timeout - simplemente mostrar JupyterLab después de 8 segundos
                 setTimeout(() => {
-                    if (!notebookOpened) {
-                        console.log('⏱️ Timeout waiting for JupyterLab, showing anyway');
-                        loader.style.display = 'none';
-                        iframe.classList.add('loaded');
-                    }
-                }, 10000);
+                    console.log('⏱️ Showing JupyterLab');
+                    loader.style.display = 'none';
+                    iframe.classList.add('loaded');
+                    
+                    // Mostrar instrucción al usuario
+                    console.log('ℹ️ To open notebook: File → Open → ' + notebookName);
+                    console.log('ℹ️ Or check localStorage: jupyterlite_pending_notebook');
+                }, 8000);
                 
             } catch (error) {
                 console.error('❌ Error:', error);
@@ -191,17 +172,14 @@
             
             function showError(message) {
                 status.textContent = 'Error';
-                errorDiv.textContent = '⚠️ ' + message;
+                errorDiv.innerHTML = `
+                    ⚠️ ${message}<br><br>
+                    <button onclick="window.location.href='${window.location.pathname.split('/').slice(0, -1).join('/')}/lab/index.html'" 
+                            style="padding: 10px 20px; background: #667eea; color: white; border: none; border-radius: 6px; cursor: pointer;">
+                        Open JupyterLab anyway
+                    </button>
+                `;
                 errorDiv.style.display = 'block';
-                
-                // Mostrar botón para intentar abrir JupyterLab de todas formas
-                const retryBtn = document.createElement('button');
-                retryBtn.textContent = 'Open JupyterLab anyway';
-                retryBtn.style.cssText = 'margin-top: 15px; padding: 10px 20px; background: #667eea; color: white; border: none; border-radius: 6px; cursor: pointer;';
-                retryBtn.onclick = () => {
-                    window.location.href = './lab/index.html';
-                };
-                errorDiv.appendChild(retryBtn);
             }
         })();
     </script>
