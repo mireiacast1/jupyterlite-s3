@@ -11,6 +11,18 @@
         "extension": "./extension",
         "load": "static/remoteEntry.a117bd216cefa0b341fe.js",
         "name": "@jupyterlite/pyodide-kernel-extension"
+      },
+      {
+        "extension": "./extension",
+        "load": "static/remoteEntry.20b5a0279ea394f88afa.js",
+        "name": "jupydrive-s3",
+        "style": "./style"
+      },
+      {
+        "extension": "./extension",
+        "load": "static/remoteEntry.6610dc2c9e0921c7f94a.js",
+        "name": "jupyter-secrets-manager",
+        "style": "./style"
       }
     ],
     "fileTypes": {
