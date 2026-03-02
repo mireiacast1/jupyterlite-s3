@@ -1,100 +1,50 @@
 ﻿<!DOCTYPE html>
 <html>
 <head>
-    <meta charset="utf-8">
-    <title>Loading Notebook</title>
-    <style>
-        body{margin:0;padding:20px;font-family:Arial;background:linear-gradient(135deg,#667eea,#764ba2);min-height:100vh;display:flex;align-items:center;justify-content:center;color:#fff;}
-        .c{background:#fff;color:#333;padding:40px;border-radius:16px;text-align:center;max-width:500px;}
-        .s{width:50px;height:50px;border:4px solid #f3f3f3;border-top-color:#667eea;border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 20px;}
-        @keyframes spin{to{transform:rotate(360deg);}}
-        button{padding:15px 30px;background:#667eea;color:#fff;border:none;border-radius:8px;cursor:pointer;margin-top:15px;}
-        button:hover{background:#5568d3;}
-    </style>
+<meta charset="utf-8">
+<title>Loading Notebook</title>
+<style>
+body{margin:0;padding:20px;font-family:Arial;background:linear-gradient(135deg,#667eea,#764ba2);min-height:100vh;display:flex;align-items:center;justify-content:center;}
+.c{background:#fff;color:#333;padding:40px;border-radius:16px;text-align:center;max-width:550px;box-shadow:0 20px 60px rgba(0,0,0,.3);}
+.s{width:50px;height:50px;border:4px solid #f3f3f3;border-top-color:#667eea;border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 20px;}
+@keyframes spin{to{transform:rotate(360deg);}}
+button{padding:15px 30px;background:#667eea;color:#fff;border:none;border-radius:8px;cursor:pointer;margin:10px;font-size:16px;font-weight:600;}
+button:hover{background:#5568d3;}
+</style>
 </head>
 <body>
-    <div class="c">
-        <div class="s" id="sp"></div>
-        <h1>Loading</h1>
-        <p id="st">Initializing...</p>
-        <div id="msg"></div>
-    </div>
-    <script>
-    (async()=>{
-        const u=new URLSearchParams(location.search).get('fromURL');
-        const st=document.getElementById('st');
-        const sp=document.getElementById('sp');
-        const msg=document.getElementById('msg');
-        if(!u){st.textContent='Error: Missing fromURL';sp.style.display='none';return;}
-        try{
-            st.textContent='Downloading...';
-            const r=await fetch(u);
-            if(!r.ok)throw new Error('HTTP '+r.status);
-            const nb=await r.json();
-            const name=(new URL(u)).searchParams.get('s3uri').split('/').pop();
-            
-            // Guardar en IndexedDB (filesystem de JupyterLite)
-            st.textContent='Saving to filesystem...';
-            const saved = await saveToIndexedDB(name, nb);
-            
-            st.textContent='Ready!';
-            sp.style.display='none';
-            msg.innerHTML='<p>Notebook: <b>'+name+'</b></p><p>Opening JupyterLab...</p>';
-            
-            // Redirect con path en la URL
-            setTimeout(()=>{
-                location.href='./lab/index.html?path='+encodeURIComponent(name);
-            },2000);
-            
-        }catch(e){
-            st.textContent='Error: '+e.message;
-            sp.style.display='none';
-            msg.innerHTML='<button onclick=\"location.href=\\'./lab/index.html\\'\"">Open JupyterLab</button>';
-        }
-        
-        async function saveToIndexedDB(filename, content) {
-            return new Promise((resolve) => {
-                const request = indexedDB.open('JupyterLite Storage');
-                request.onsuccess = (e) => {
-                    const db = e.target.result;
-                    if (!db.objectStoreNames.contains('files')) {
-                        // Fallback a localStorage
-                        localStorage.setItem('jl_nb_'+filename, JSON.stringify(content));
-                        resolve(false);
-                        return;
-                    }
-                    try {
-                        const tx = db.transaction(['files'], 'readwrite');
-                        const store = tx.objectStore('files');
-                        const data = {
-                            name: filename,
-                            path: filename,
-                            type: 'notebook',
-                            format: 'json',
-                            content: content,
-                            created: new Date().toISOString(),
-                            last_modified: new Date().toISOString(),
-                            mimetype: 'application/x-ipynb+json',
-                            writable: true
-                        };
-                        store.put(data, filename);
-                        tx.oncomplete = () => resolve(true);
-                        tx.onerror = () => {
-                            localStorage.setItem('jl_nb_'+filename, JSON.stringify(content));
-                            resolve(false);
-                        };
-                    } catch(err) {
-                        localStorage.setItem('jl_nb_'+filename, JSON.stringify(content));
-                        resolve(false);
-                    }
-                };
-                request.onerror = () => {
-                    localStorage.setItem('jl_nb_'+filename, JSON.stringify(content));
-                    resolve(false);
-                };
-            });
-        }
-    })();
-    </script>
+<div class="c">
+<div class="s" id="sp"></div>
+<h1 id="t">Loading Notebook</h1>
+<p id="st">Initializing...</p>
+<div id="msg"></div>
+</div>
+<script>
+(async()=>{
+const u=new URLSearchParams(location.search).get('fromURL');
+const st=document.getElementById('st');
+const sp=document.getElementById('sp');
+const msg=document.getElementById('msg');
+const t=document.getElementById('t');
+if(!u){st.textContent='Error: Missing fromURL';sp.style.display='none';return;}
+try{
+st.textContent='Downloading...';
+const r=await fetch(u);
+if(!r.ok)throw new Error('HTTP '+r.status);
+const nb=await r.json();
+const name=(new URL(u)).searchParams.get('s3uri').split('/').pop();
+sp.style.display='none';
+t.textContent='Ready!';
+st.textContent='';
+msg.innerHTML='<p>Notebook: <b>'+name+'</b></p><p>Redirecting to JupyterLab...</p>';
+localStorage.setItem('pending_notebook',JSON.stringify({name:name,content:nb,s3uri:(new URL(u)).searchParams.get('s3uri')}));
+setTimeout(()=>location.href='./lab/index.html',2000);
+}catch(e){
+sp.style.display='none';
+t.textContent='Error';
+st.textContent=e.message;
+}
+})();
+</script>
 </body>
 </html>
