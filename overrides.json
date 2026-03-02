@@ -1,0 +1,5 @@
+{
+  "@jupyterlab/application-extension:shell": {
+    "notebookLoader": true
+  }
+}

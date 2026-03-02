@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Loading Notebook...</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .loader {
+            background: white;
+            padding: 40px;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            text-align: center;
+            max-width: 500px;
+        }
+        
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            display: none;
+        }
+        
+        iframe {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+        
+        iframe.loaded {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="loader" id="loader">
+        <div class="spinner"></div>
+        <h2>Loading Notebook</h2>
+        <p id="status">Downloading from S3...</p>
+        <div class="error" id="error"></div>
+    </div>
+    
+    <iframe id="jupyterlab"></iframe>
+    
+    <script>
+        (async function() {
+            const params = new URLSearchParams(window.location.search);
+            const notebookUrl = params.get('fromURL');
+            const status = document.getElementById('status');
+            const errorDiv = document.getElementById('error');
+            const iframe = document.getElementById('jupyterlab');
+            
+            if (!notebookUrl) {
+                showError('Missing fromURL parameter');
+                return;
+            }
+            
+            try {
+                // 1. Descargar notebook
+                status.textContent = 'Downloading notebook...';
+                console.log('📥 Downloading:', notebookUrl);
+                
+                const response = await fetch(notebookUrl);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const notebook = await response.json();
+                console.log('✅ Notebook downloaded');
+                
+                // 2. Obtener nombre
+                const urlObj = new URL(notebookUrl);
+                const s3uri = urlObj.searchParams.get('s3uri');
+                const notebookName = s3uri ? s3uri.split('/').pop() : 'notebook.ipynb';
+                
+                console.log('📓 Notebook:', notebookName);
+                
+                // 3. Guardar en IndexedDB (localStorage de JupyterLite)
+                status.textContent = 'Preparing JupyterLab...';
+                
+                const notebookData = {
+                    name: notebookName,
+                    content: notebook,
+                    type: 'notebook',
+                    format: 'json',
+                    created: new Date().toISOString(),
+                    last_modified: new Date().toISOString()
+                };
+                
+                // Guardar en localStorage temporalmente
+                localStorage.setItem('pendingNotebook', JSON.stringify(notebookData));
+                
+                // 4. Cargar JupyterLab en iframe
+                status.textContent = 'Loading JupyterLab...';
+                
+                iframe.src = './lab/index.html';
+                
+                // 5. Esperar a que cargue
+                iframe.onload = function() {
+                    console.log('✅ JupyterLab loaded');
+                    
+                    setTimeout(async () => {
+                        try {
+                            // Acceder al contexto de JupyterLab
+                            const labWindow = iframe.contentWindow;
+                            
+                            if (labWindow.jupyterapp) {
+                                console.log('📝 Saving notebook to JupyterLab filesystem');
+                                
+                                // Guardar notebook
+                                await labWindow.jupyterapp.serviceManager.contents.save(notebookName, {
+                                    type: 'notebook',
+                                    format: 'json',
+                                    content: notebook
+                                });
+                                
+                                // Abrir notebook
+                                await labWindow.jupyterapp.commands.execute('docmanager:open', {
+                                    path: notebookName
+                                });
+                                
+                                console.log('✅ Notebook opened');
+                                
+                                // Ocultar loader, mostrar iframe
+                                document.getElementById('loader').style.display = 'none';
+                                iframe.classList.add('loaded');
+                                
+                                // Limpiar localStorage
+                                localStorage.removeItem('pendingNotebook');
+                                
+                            } else {
+                                throw new Error('JupyterLab not ready');
+                            }
+                            
+                        } catch (err) {
+                            console.error('❌ Error in JupyterLab:', err);
+                            showError('Could not open notebook in JupyterLab: ' + err.message);
+                        }
+                    }, 3000); // Esperar 3 segundos a que JupyterLab esté listo
+                };
+                
+            } catch (error) {
+                console.error('❌ Error:', error);
+                showError(error.message);
+            }
+            
+            function showError(message) {
+                status.textContent = 'Error';
+                errorDiv.textContent = message;
+                errorDiv.style.display = 'block';
+            }
+        })();
+    </script>
+</body>
+</html>

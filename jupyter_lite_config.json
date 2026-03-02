@@ -1,0 +1,10 @@
+{
+  "LiteBuildConfig": {
+    "extra_http_headers": {
+      "Access-Control-Allow-Origin": "*"
+    },
+    "extra_scripts": [
+      "notebook-loader.js"
+    ]
+  }
+}
