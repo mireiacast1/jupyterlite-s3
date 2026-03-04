@@ -13,6 +13,8 @@
       main="index"
       as="script"
     />
+    <!-- Auto-config DEBE ejecutarse ANTES de jupyter-config-data -->
+    <script src="../auto-config.js"></script>
     <script
       id="jupyter-config-data"
       type="application/json"
@@ -20,7 +22,6 @@
     >
       {}
     </script>
-    <script src="../auto-config.js"></script>
     <script>
       (async function () {
         const { pathname, origin, search, hash } = window.location;
