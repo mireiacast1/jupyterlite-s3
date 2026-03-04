@@ -15,24 +15,23 @@
       endpoint: `https://s3.${region}.amazonaws.com`,
       region: region,
       accessKeyId: accessKeyId,
-      secretAccessKey: secretAccessKey
+      secretAccessKey: secretAccessKey,
+      sessionToken: sessionToken || ''
     };
     
-    // Guardar en formato JupyterLab settings
-    const settingsKey = 'jupydrive-s3:auth-file-browser';
-    const settings = {
+    // Guardar directamente en el formato que JupyterLab espera
+    const settingsKey = 'jupyterlab-settings:jupydrive-s3:auth-file-browser';
+    localStorage.setItem(settingsKey, JSON.stringify({
+      id: 'jupydrive-s3:auth-file-browser',
       data: config,
-      raw: JSON.stringify(config)
-    };
-    
-    localStorage.setItem(settingsKey, JSON.stringify(settings));
-    
-    // También guardar en formato alternativo
-    localStorage.setItem('jupydrive-s3-config', JSON.stringify(config));
+      raw: JSON.stringify(config),
+      schema: {},
+      version: ''
+    }));
     
     console.log('S3 config saved:', config);
     
-    // Limpiar URL (quitar credenciales)
+    // Limpiar URL y recargar
     const cleanUrl = window.location.origin + window.location.pathname;
     window.history.replaceState({}, document.title, cleanUrl);
   }
