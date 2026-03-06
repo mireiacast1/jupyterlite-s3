@@ -21,7 +21,7 @@ def lambda_handler(event, context):
     root = s3uri_parts[1] if len(s3uri_parts) > 1 else ''
     
     # Construir URL de JupyterLite
-    jupyterlite_url = 'https://mireiacast1.github.io/jupyterlite-clean/lab/index.html'
+    jupyterlite_url = 'https://mireiacast1.github.io/jupyterlite-s3/lab/index.html'
     
     query_params = {
         'bucket': bucket,

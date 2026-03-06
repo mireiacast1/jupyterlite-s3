@@ -6,7 +6,25 @@
     "baseUrl": "./",
     "defaultKernelName": "python",
     "faviconUrl": "./lab/favicon.ico",
-    "federated_extensions": [],
+    "federated_extensions": [
+      {
+        "extension": "./extension",
+        "load": "static/remoteEntry.a117bd216cefa0b341fe.js",
+        "name": "@jupyterlite/pyodide-kernel-extension"
+      },
+      {
+        "extension": "./extension",
+        "load": "static/remoteEntry.20b5a0279ea394f88afa.js",
+        "name": "jupydrive-s3",
+        "style": "./style"
+      },
+      {
+        "extension": "./extension",
+        "load": "static/remoteEntry.6610dc2c9e0921c7f94a.js",
+        "name": "jupyter-secrets-manager",
+        "style": "./style"
+      }
+    ],
     "fileTypes": {
       "avi": {
         "extensions": [
@@ -382,7 +400,14 @@
     },
     "fullLabextensionsUrl": "./extensions",
     "fullStaticUrl": "./build",
-    "licensesUrl": "./lab/api/licenses"
+    "licensesUrl": "./lab/api/licenses",
+    "litePluginSettings": {
+      "@jupyterlite/pyodide-kernel-extension:kernel": {
+        "pipliteUrls": [
+          "./extensions/@jupyterlite/pyodide-kernel-extension/static/pypi/all.json?sha256=783d01f64a330ecbbd82318ba2fde8842bc8eece502b821b8c0f57cacdde5cdc"
+        ]
+      }
+    }
   },
   "jupyter-lite-schema-version": 0
 }
