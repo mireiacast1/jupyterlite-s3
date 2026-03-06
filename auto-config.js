@@ -7,12 +7,13 @@
   const bucket = params.get('bucket');
   const region = params.get('region') || 'eu-central-1';
   const root = params.get('root') || '';
+  const endpoint = params.get('endpoint') || `https://c1nl0knyal.execute-api.eu-central-1.amazonaws.com/dev/s3-proxy`;
   
   if (accessKeyId && secretAccessKey && bucket) {
     const config = {
       bucket: bucket,
       root: root,
-      endpoint: `https://s3.${region}.amazonaws.com`,
+      endpoint: endpoint,
       region: region,
       accessKeyId: accessKeyId,
       secretAccessKey: secretAccessKey,
