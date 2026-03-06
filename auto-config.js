@@ -20,7 +20,6 @@
       sessionToken: sessionToken || ''
     };
     
-    // Guardar directamente en el formato que JupyterLab espera
     const settingsKey = 'jupyterlab-settings:jupydrive-s3:auth-file-browser';
     localStorage.setItem(settingsKey, JSON.stringify({
       id: 'jupydrive-s3:auth-file-browser',
@@ -31,9 +30,5 @@
     }));
     
     console.log('S3 config saved:', config);
-    
-    // Limpiar URL y recargar
-    const cleanUrl = window.location.origin + window.location.pathname;
-    window.history.replaceState({}, document.title, cleanUrl);
   }
 })();
