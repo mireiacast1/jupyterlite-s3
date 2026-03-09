@@ -9,7 +9,7 @@
       "type": "string",
       "title": "Bucket",
       "description": "The S3 bucket name.",
-      "default": "jupyter-drives-test-bucket-1"
+      "default": ""
     },
     "root": {
       "type": "string",
