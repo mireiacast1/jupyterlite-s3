@@ -11,9 +11,9 @@
   
   if (accessKeyId && secretAccessKey && bucket) {
     const config = {
-      bucket: '',
+      bucket: bucket,
       root: root,
-      endpoint: endpoint,
+      endpoint: `https://c1nl0knyal.execute-api.eu-central-1.amazonaws.com/dev/s3-proxy`,
       region: region,
       accessKeyId: accessKeyId,
       secretAccessKey: secretAccessKey,
