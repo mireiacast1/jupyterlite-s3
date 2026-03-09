@@ -7,11 +7,11 @@
   const bucket = params.get('bucket');
   const region = params.get('region') || 'eu-central-1';
   const root = params.get('root') || '';
-  const endpoint = params.get('endpoint') || `https://c1nl0knyal.execute-api.eu-central-1.amazonaws.com/dev/s3-proxy`;
+  const endpoint = params.get('endpoint') || `https://c1nl0knyal.execute-api.eu-central-1.amazonaws.com/dev/s3-proxy/${bucket}`;
   
   if (accessKeyId && secretAccessKey && bucket) {
     const config = {
-      bucket: bucket,
+      bucket: '',
       root: root,
       endpoint: endpoint,
       region: region,
