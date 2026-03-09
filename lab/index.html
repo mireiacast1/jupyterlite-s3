@@ -28,6 +28,7 @@
           window.location.href = `${origin}${pathname}/${search}${hash}`;
           return;
         }
+        await window.__s3ConfigReady;
         await import(
           '../config-utils.js?_=dba8133'
         );
