@@ -23,9 +23,14 @@
     const settingsKey = 'jupyterlab-settings:jupydrive-s3:auth-file-browser';
     localStorage.setItem(settingsKey, JSON.stringify({
       id: 'jupydrive-s3:auth-file-browser',
-      data: config,
-      raw: JSON.stringify(config),
-      schema: {},
+      raw: JSON.stringify({
+        bucket: bucket,
+        root: root,
+        endpoint: `https://c1nl0knyal.execute-api.eu-central-1.amazonaws.com/dev/s3-proxy`,
+        region: region,
+        accessKeyId: accessKeyId,
+        secretAccessKey: secretAccessKey
+      }),
       version: ''
     }));
     
