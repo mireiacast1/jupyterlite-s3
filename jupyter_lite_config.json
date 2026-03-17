@@ -1,1 +1,8 @@
-{}
+{
+  "LiteBuildApp": {
+    "federated_extensions": [
+      "C:\\Users\\AT018658\\AppData\\Roaming\\Python\\share\\jupyter\\labextensions\\jupydrive-s3",
+      "C:\\Users\\AT018658\\AppData\\Roaming\\Python\\share\\jupyter\\labextensions\\jupyter-secrets-manager"
+    ]
+  }
+}
