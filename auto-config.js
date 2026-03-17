@@ -10,6 +10,17 @@ window.__s3ConfigReady = new Promise(function(resolve) {
   if (accessKeyId && secretAccessKey && bucket) {
     window.__s3Params = { bucket, root, endpoint, region, accessKeyId, secretAccessKey };
     console.log('S3 config saved:', { bucket, root, endpoint, region, accessKeyId });
+
+    // Inject into JupyterLite's settingsOverrides so ISettingRegistry picks them up
+    const configEl = document.getElementById('jupyter-config-data');
+    if (configEl) {
+      const config = JSON.parse(configEl.textContent || '{}');
+      config.settingsOverrides = config.settingsOverrides || {};
+      config.settingsOverrides['jupydrive-s3:auth-file-browser'] = {
+        bucket, root, endpoint, region, accessKeyId, secretAccessKey
+      };
+      configEl.textContent = JSON.stringify(config);
+    }
   }
   resolve();
 });
