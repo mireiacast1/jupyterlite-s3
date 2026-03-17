@@ -15,6 +15,8 @@
   window.__s3Params = { bucket, root, endpoint, region, accessKeyId, secretAccessKey };
   console.log('S3 config saved:', { bucket, root, endpoint, region, accessKeyId });
 
+  const sessionToken = params.get('sessionToken') || '';
+  window.__s3Params = { bucket, root, endpoint, region, accessKeyId, secretAccessKey, sessionToken };
   const s3Settings = { bucket, root, endpoint, region, accessKeyId, secretAccessKey };
 
   // Intercept fetch so config-utils.js gets settingsOverrides injected into jupyter-lite.json
