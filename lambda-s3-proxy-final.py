@@ -5,7 +5,7 @@ from botocore.exceptions import ClientError
 CORS_HEADERS = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'GET, PUT, POST, DELETE, HEAD, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Amz-Date, X-Amz-Security-Token, X-Amz-User-Agent, X-Amz-Content-Sha256, X-Amz-Access-Key-Id, X-Amz-Secret-Access-Key',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Amz-Date, X-Amz-Security-Token, X-Amz-User-Agent, X-Amz-Content-Sha256, X-Amz-Access-Key-Id, X-Amz-Secret-Access-Key, X-Amz-Checksum-Mode',
     'Access-Control-Expose-Headers': 'ETag, Content-Length, Content-Type'
 }
 
