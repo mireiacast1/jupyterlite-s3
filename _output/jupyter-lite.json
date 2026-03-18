@@ -6,7 +6,20 @@
     "baseUrl": "./",
     "defaultKernelName": "python",
     "faviconUrl": "./lab/favicon.ico",
-    "federated_extensions": [],
+    "federated_extensions": [
+      {
+        "extension": "./extension",
+        "load": "static/remoteEntry.20b5a0279ea394f88afa.js",
+        "name": "jupydrive-s3",
+        "style": "./style"
+      },
+      {
+        "extension": "./extension",
+        "load": "static/remoteEntry.6610dc2c9e0921c7f94a.js",
+        "name": "jupyter-secrets-manager",
+        "style": "./style"
+      }
+    ],
     "fileTypes": {
       "avi": {
         "extensions": [
